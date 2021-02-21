@@ -1,0 +1,55 @@
+version: "3"
+
+services:
+  project-a-dockerd:
+    image: docker:20-dind
+    privileged: true
+    ports:
+      - 3000:3000
+    environment:
+      # 明示的に空にすると TLS を無効にできる
+      # https://github.com/docker-library/docker/blob/master/20.10/dind/dockerd-entrypoint.sh#L111
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - dind-data-a:/var/lib/docker
+      - ./project-a:/project-a
+
+  project-a-compose:
+    image: docker/compose:latest
+    depends_on:
+      - project-a-dockerd
+    environment:
+      - DOCKER_HOST=tcp://project-a-docker:2375
+    volumes:
+      - ./project-a:/project-a
+    working_dir: /project-a
+    command:
+      # dockerd の起動を多少待つ
+      - /bin/sh
+      - -c
+      - |
+        sleep 3
+        docker-compose up
+
+  project-b:
+    image: docker:20-dind
+    privileged: true
+    tty: true
+    ports:
+      - 5302:2375 # dockerd
+      - 9000:80 # web
+    environment:
+      - DOCKER_TLS_CERTDIR=
+    volumes:
+      - dind-data-b:/var/lib/docker
+      - ./project-b:/project-b
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+
+volumes:
+  dind-data-a:
+  dind-data-b:

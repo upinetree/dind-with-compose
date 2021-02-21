@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  project-b:
+    image: docker:20-dind
+    privileged: true
+    tty: true
+    ports:
+      - 5302:2376 # dockerd (tls)
+      - 9000:80 # web
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    volumes:
+      - ./certs/ca:/certs/ca
+      - ./certs/client:/certs/client
+      - dind-data-b:/var/lib/docker
+      - ./project-b:/project-b
+
+volumes:
+  dind-data-b:

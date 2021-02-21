@@ -1,0 +1,7 @@
+version: "3"
+
+services:
+  web:
+    image: docker/getting-started
+    ports:
+      - 80:80

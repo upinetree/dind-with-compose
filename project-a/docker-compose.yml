@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  backend:
+    build:
+      context: ./
+      dockerfile: backend/Dockerfile
+    ports:
+      - 3000:3000
+
+  web:
+    image: node:12
+    volumes:
+      - ./web:/app
+    working_dir: /app
+    command: yarn

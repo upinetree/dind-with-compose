@@ -1,0 +1,60 @@
+version: "3"
+
+services:
+  project-a-dockerd:
+    image: docker:20-dind
+    privileged: true
+    volumes:
+      - dind-certs-client-a:/certs/client
+      - dind-data-a:/var/lib/docker
+      - ./project-a:/project-a
+
+  project-a-compose:
+    image: docker/compose:latest
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_CERT_PATH=/certs/client
+    volumes:
+      - dind-certs-client-a:/certs/client
+      - ./project-a:/project-a
+    working_dir: /project-a
+    links:
+      - project-a-dockerd:docker # dind の TLS 証明書の SAN に該当するようにエイリアス設定
+    command: up
+
+  project-b-dockerd:
+    image: docker:20-dind
+    privileged: true
+    volumes:
+      - dind-certs-client-b:/certs/client
+      - dind-data-b:/var/lib/docker
+      - ./project-b:/project-b
+
+  project-b-compose:
+    image: docker/compose:latest
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_TLS_VERIFY=1
+      - DOCKER_CERT_PATH=/certs/client
+    volumes:
+      - dind-certs-client-b:/certs/client
+      - ./project-b:/project-b
+    working_dir: /project-b
+    links:
+      - project-b-dockerd:docker # dind の TLS 証明書の SAN に該当するようにエイリアス設定
+    command: up
+
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - 80:80
+      - 443:443
+
+volumes:
+  dind-data-a:
+  dind-data-b:
+  dind-certs-client-a:
+  dind-certs-client-b:
